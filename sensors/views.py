@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db import transaction
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 import math
 
 from .models import (
@@ -532,74 +532,62 @@ def health_check(request: HttpRequest) -> Response:
     }, status=http_status)
 
 
-# INDIVIDUAL DEVICE ENDPOINTS - RETURN SINGLE SENSOR VALUES
-@api_view(['GET'])
-def ecg_value(request: HttpRequest) -> Response:
+# INDIVIDUAL DEVICE ENDPOINTS - RETURN SINGLE SENSOR VALUES (SIMPLE DJANGO VIEWS)
+def ecg_value(request):
     """Returns ECG heart rate value: 75"""
     try:
-        # pylint: disable=no-member
-        latest = ECGReading.objects.latest('timestamp')  # type: ignore
-        value = latest.heart_rate or 75  # Default to 75 if no data
-        return Response(str(value), content_type='text/plain', status=200)
-    except ECGReading.DoesNotExist:  # type: ignore
-        return Response("75", content_type='text/plain', status=200)
+        latest = ECGReading.objects.latest('timestamp')
+        value = latest.heart_rate or 75
+        return HttpResponse(str(value), content_type='text/plain', status=200)
+    except ECGReading.DoesNotExist:
+        return HttpResponse("75", content_type='text/plain', status=200)
 
 
-@api_view(['GET'])  
-def spo2_value(request: HttpRequest) -> Response:
+def spo2_value(request):
     """Returns SpO2 percentage value: 98.5"""
     try:
-        # pylint: disable=no-member
-        latest = PulseOximeterReading.objects.latest('timestamp')  # type: ignore
-        value = latest.spo2 or 98.5  # Default to 98.5 if no data
-        return Response(str(value), content_type='text/plain', status=200)
-    except PulseOximeterReading.DoesNotExist:  # type: ignore
-        return Response("98.5", content_type='text/plain', status=200)
+        latest = PulseOximeterReading.objects.latest('timestamp')
+        value = latest.spo2 or 98.5
+        return HttpResponse(str(value), content_type='text/plain', status=200)
+    except PulseOximeterReading.DoesNotExist:
+        return HttpResponse("98.5", content_type='text/plain', status=200)
 
 
-@api_view(['GET'])
-def max30102_value(request: HttpRequest) -> Response:
+def max30102_value(request):
     """Returns MAX30102 heart rate value: 72"""
     try:
-        # pylint: disable=no-member
-        latest = MAX30102Reading.objects.latest('timestamp')  # type: ignore
-        value = latest.heart_rate or 72  # Default to 72 if no data
-        return Response(str(value), content_type='text/plain', status=200)
-    except MAX30102Reading.DoesNotExist:  # type: ignore
-        return Response("72", content_type='text/plain', status=200)
+        latest = MAX30102Reading.objects.latest('timestamp')
+        value = latest.heart_rate or 72
+        return HttpResponse(str(value), content_type='text/plain', status=200)
+    except MAX30102Reading.DoesNotExist:
+        return HttpResponse("72", content_type='text/plain', status=200)
 
 
-@api_view(['GET'])
-def accel_x_value(request: HttpRequest) -> Response:
+def accel_x_value(request):
     """Returns X-axis acceleration: 0.15"""
     try:
-        # pylint: disable=no-member  
-        latest = AccelerometerReading.objects.latest('timestamp')  # type: ignore
-        value = latest.x_axis or 0.15  # Default to 0.15 if no data
-        return Response(str(value), content_type='text/plain', status=200)
-    except AccelerometerReading.DoesNotExist:  # type: ignore
-        return Response("0.15", content_type='text/plain', status=200)
+        latest = AccelerometerReading.objects.latest('timestamp')
+        value = latest.x_axis or 0.15
+        return HttpResponse(str(value), content_type='text/plain', status=200)
+    except AccelerometerReading.DoesNotExist:
+        return HttpResponse("0.15", content_type='text/plain', status=200)
 
 
-@api_view(['GET'])
-def accel_y_value(request: HttpRequest) -> Response:
+def accel_y_value(request):
     """Returns Y-axis acceleration: -0.08"""
     try:
-        # pylint: disable=no-member
-        latest = AccelerometerReading.objects.latest('timestamp')  # type: ignore
-        value = latest.y_axis or -0.08  # Default to -0.08 if no data
-        return Response(str(value), content_type='text/plain', status=200)
-    except AccelerometerReading.DoesNotExist:  # type: ignore
-        return Response("-0.08", content_type='text/plain', status=200)
+        latest = AccelerometerReading.objects.latest('timestamp')
+        value = latest.y_axis or -0.08
+        return HttpResponse(str(value), content_type='text/plain', status=200)
+    except AccelerometerReading.DoesNotExist:
+        return HttpResponse("-0.08", content_type='text/plain', status=200)
 
 
-@api_view(['GET'])
-def accel_z_value(request: HttpRequest) -> Response:
+def accel_z_value(request):
     """Returns Z-axis acceleration: 9.81"""
     try:
-        # pylint: disable=no-member
-        latest = AccelerometerReading.objects.latest('timestamp')  # type: ignore
-        value = latest.z_axis or 9.81  # Default to 9.81 if no data
-        return Response(str(value), content_type='text/plain', status=200)
-    except AccelerometerReading.DoesNotExist:  # type: ignore
-        return Response("9.81", content_type='text/plain', status=200)
+        latest = AccelerometerReading.objects.latest('timestamp')
+        value = latest.z_axis or 9.81
+        return HttpResponse(str(value), content_type='text/plain', status=200)
+    except AccelerometerReading.DoesNotExist:
+        return HttpResponse("9.81", content_type='text/plain', status=200)
