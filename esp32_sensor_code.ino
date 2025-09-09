@@ -257,21 +257,48 @@ void sendSensorData() {
   
   if (httpResponseCode > 0) {
     String response = http.getString();
-    Serial.println("HTTP Response code: " + String(httpResponseCode));
-    Serial.println("Server response: " + response);
+    Serial.println("HTTP Response Code: " + String(httpResponseCode));
     
-    if (httpResponseCode == 201) {
-      Serial.println("✅ SUCCESS: Data uploaded to cloud!");
-      Serial.println("✅ Your sensor data is now stored in the database");
-    } else if (httpResponseCode == 200) {
-      Serial.println("✅ SUCCESS: Data processed successfully!");
-    } else {
-      Serial.println("⚠️  Server returned code: " + String(httpResponseCode));
+    // Handle different HTTP status codes
+    switch (httpResponseCode) {
+      case 200:
+        Serial.println("✅ 200 OK - Request successful");
+        break;
+      case 201:
+        Serial.println("✅ 201 CREATED - Data stored successfully");
+        break;
+      case 400:
+        Serial.println("❌ 400 BAD REQUEST - Invalid data format");
+        break;
+      case 401:
+        Serial.println("❌ 401 UNAUTHORIZED - Authentication required");
+        break;
+      case 403:
+        Serial.println("❌ 403 FORBIDDEN - Access denied");
+        break;
+      case 404:
+        Serial.println("❌ 404 NOT FOUND - Endpoint not found");
+        break;
+      case 500:
+        Serial.println("❌ 500 INTERNAL SERVER ERROR - Server problem");
+        break;
+      case 502:
+        Serial.println("❌ 502 BAD GATEWAY - Server unavailable");
+        break;
+      case 503:
+        Serial.println("❌ 503 SERVICE UNAVAILABLE - Server overloaded");
+        break;
+      default:
+        Serial.println("⚠️  HTTP " + String(httpResponseCode) + " - Unexpected response");
+        break;
     }
+    
+    Serial.println("Server Response: " + response);
   } else {
-    Serial.println("❌ HTTP Request failed: " + String(httpResponseCode));
-    Serial.println("❌ Error: " + http.errorToString(httpResponseCode));
-    Serial.println("❌ Check WiFi connection and server URL");
+    Serial.println("❌ HTTP Request Failed");
+    Serial.println("Error Code: " + String(httpResponseCode));
+    Serial.println("Error: " + http.errorToString(httpResponseCode));
+    Serial.println("Check WiFi connection and server URL");
   }
   
   http.end();

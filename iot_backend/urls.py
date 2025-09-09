@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect
 
 def home_redirect(request):
@@ -24,8 +24,12 @@ def home_redirect(request):
     return redirect('/api/')
 
 def health_check(request):
-    """Root health check"""
-    return HttpResponse("IoT Sensor System - Live on Render", content_type="text/plain")
+    """Root health check with proper HTTP status"""
+    return JsonResponse({
+        'status': 'success',
+        'code': 200,
+        'message': 'OK'
+    })
 
 urlpatterns = [
     path('', home_redirect, name='home'),

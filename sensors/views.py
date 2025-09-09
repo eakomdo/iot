@@ -172,19 +172,23 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                     readings_created.append('device_status')
                 
                 return Response({
-                    'success': True,
-                    'message': 'Sensor data received and stored successfully',
-                    'device_id': device_id,
-                    'status': 'Data saved to database',
-                    'timestamp': timezone.now().isoformat()
+                    'status': 'success',
+                    'code': 201,
+                    'message': 'Created'
                 }, status=status.HTTP_201_CREATED)
                 
         except (ValueError, KeyError, TypeError) as e:
             return Response({
-                'error': f'Error processing sensor data: {str(e)}'
+                'status': 'error',
+                'code': 500,
+                'message': 'Internal Server Error'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'status': 'error',
+        'code': 400,
+        'message': 'Bad Request'
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 # pylint: disable=unused-argument
@@ -195,7 +199,11 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
         # pylint: disable=no-member
         device = Device.objects.get(device_id=device_id)  # type: ignore
     except Device.DoesNotExist:  # type: ignore
-        return Response({'error': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            'status': 'error',
+            'code': 404,
+            'message': 'Not Found'
+        }, status=status.HTTP_404_NOT_FOUND)
     
     # Get recent readings (last 100 for each sensor type)
     # pylint: disable=no-member
@@ -206,12 +214,9 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
     status_readings = DeviceStatus.objects.filter(device=device)[:100]  # type: ignore
     
     return Response({
-        'device': DeviceSerializer(device).data,
-        'ecg_readings': ECGReadingSerializer(ecg_readings, many=True).data,
-        'pulse_oximeter_readings': PulseOximeterReadingSerializer(pulse_readings, many=True).data,
-        'max30102_readings': MAX30102ReadingSerializer(max30102_readings, many=True).data,
-        'accelerometer_readings': AccelerometerReadingSerializer(accel_readings, many=True).data,
-        'device_status': DeviceStatusSerializer(status_readings, many=True).data,
+        'status': 'success',
+        'code': 200,
+        'message': 'OK'
     })
 
 
@@ -220,24 +225,9 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
 def api_overview(request: HttpRequest) -> Response:
     """API endpoint overview"""
     return Response({
-        'message': 'IoT Sensor Data Collection API - Ready for ESP32 Devices',
-        'status': 'operational',
-        'version': '1.0',
-        'endpoints': {
-            'devices': '/api/devices/',
-            'sensor_data_upload': '/api/sensors/bulk/',
-            'device_readings': '/api/devices/{device_id}/readings/',
-            'health_check': '/api/health/'
-        },
-        'esp32_integration': {
-            'upload_url': '/api/sensors/bulk/',
-            'method': 'POST',
-            'content_type': 'application/json',
-            'required_field': 'device_id',
-            'response': 'Success message with timestamp'
-        },
-        'admin_panel': '/admin/',
-        'database': 'PostgreSQL - Ready for real sensor data'
+        'status': 'success',
+        'code': 200,
+        'message': 'OK'
     })
 
 
@@ -271,15 +261,11 @@ def health_check(request: HttpRequest) -> Response:
         ecg_count = 0
         total_readings = 0
     
+    is_healthy = db_status == "healthy"
+    http_status = status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    
     return Response({
-        'status': 'healthy' if db_status == "healthy" else 'degraded',
-        'timestamp': timezone.now().isoformat(),
-        'database': db_status,
-        'statistics': {
-            'total_devices': device_count,
-            'total_readings': total_readings,
-            'ecg_readings': ecg_count,
-        },
-        'version': '1.0',
-        'deployment': 'render'
-    })
+        'status': 'success' if is_healthy else 'error',
+        'code': 200 if is_healthy else 503,
+        'message': 'OK' if is_healthy else 'Service Unavailable'
+    }, status=http_status)
