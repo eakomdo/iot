@@ -21,6 +21,20 @@ class DeviceListCreateView(generics.ListCreateAPIView):
     # pylint: disable=no-member
     queryset = Device.objects.all()  # type: ignore
     serializer_class = DeviceSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """Return simple list of device names, not full JSON"""
+        # pylint: disable=no-member
+        devices = Device.objects.all()  # type: ignore
+        device_names = [device.device_id for device in devices]
+        
+        if device_names:
+            # Return device names one per line
+            return Response("\n".join(device_names), 
+                          content_type='text/plain')
+        else:
+            return Response("NO_DEVICES_REGISTERED", 
+                          content_type='text/plain')
 
 
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -253,6 +267,25 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
         'code': 200,
         'message': 'OK'
     })
+
+
+@api_view(['GET'])
+def simple_device_list(request: HttpRequest) -> Response:
+    """Get simple device list - just device names, no JSON"""
+    # pylint: disable=no-member
+    devices = Device.objects.filter(is_active=True)  # type: ignore
+    
+    if devices.exists():
+        device_info = []
+        for device in devices:
+            # Show device name and status
+            device_info.append(device.device_id)
+        
+        return Response("\n".join(device_info), 
+                       content_type='text/plain')
+    else:
+        return Response("NO_ACTIVE_DEVICES", 
+                       content_type='text/plain')
 
 
 @api_view(['GET'])

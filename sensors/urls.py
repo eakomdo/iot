@@ -10,6 +10,7 @@ urlpatterns = [
     
     # Device endpoints
     path('devices/', views.DeviceListCreateView.as_view(), name='device-list'),
+    path('devices/simple/', views.simple_device_list, name='simple-device-list'),
     path('devices/<str:device_id>/', views.DeviceDetailView.as_view(), name='device-detail'),
     path('devices/<str:device_id>/readings/', views.device_readings, name='device-readings'),
     path('devices/<str:device_id>/latest/', views.latest_readings, name='latest-readings'),
