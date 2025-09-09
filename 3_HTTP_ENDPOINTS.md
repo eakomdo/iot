@@ -24,7 +24,30 @@ POST https://iot-khgd.onrender.com/api/sensors/bulk/
 0.12
 ```
 
-### **2. Get Device List**
+### **2. Get Individual Sensor Values (NEW!)**
+```bash
+# Get just ECG heart rate
+GET https://iot-khgd.onrender.com/api/sensors/ecg/value/
+
+# Get just SpO2 level  
+GET https://iot-khgd.onrender.com/api/sensors/spo2/value/
+
+# Get just MAX30102 heart rate
+GET https://iot-khgd.onrender.com/api/sensors/max30102/value/
+
+# Get just X-axis accelerometer
+GET https://iot-khgd.onrender.com/api/sensors/accelerometer/x/
+
+# Get just Y-axis accelerometer
+GET https://iot-khgd.onrender.com/api/sensors/accelerometer/y/
+
+# Get just Z-axis accelerometer
+GET https://iot-khgd.onrender.com/api/sensors/accelerometer/z/
+```
+**Purpose:** Get single sensor values (just the number)  
+**Response:** Single value like `75` or `98.2`
+
+### **3. Get Device List**
 ```
 GET https://iot-khgd.onrender.com/api/devices/
 ```
@@ -34,17 +57,6 @@ GET https://iot-khgd.onrender.com/api/devices/
 ESP32_001
 ESP32_002
 HEART_MONITOR
-```
-
-### **3. Get Latest Sensor Values**
-```
-GET https://iot-khgd.onrender.com/api/devices/{device_id}/raw/
-```
-**Purpose:** Get current sensor readings in CSV format  
-**Example:** `GET /api/devices/ESP32_001/raw/`  
-**Response:** Comma-separated values
-```
-75,98,74,0.12,-0.05,9.81
 ```
 
 ## **📱 Usage Examples**
