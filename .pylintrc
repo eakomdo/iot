@@ -1,0 +1,22 @@
+# Pylint configuration for Django project
+[MASTER]
+# load-plugins=pylint_django
+# django-settings-module=iot_backend.settings
+
+[MESSAGES CONTROL]
+# Disable specific warnings that are common in Django projects
+disable=
+    # Import warnings that VS Code shows but aren't real issues
+    import-error,
+    no-name-in-module,
+    # Django-specific patterns that pylint doesn't understand
+    no-member,
+    # Unused arguments in Django views (required by framework)
+    unused-argument,
+    # Other common Django false positives
+    invalid-name,
+    too-few-public-methods,
+    missing-docstring
+
+[FORMAT]
+max-line-length=88

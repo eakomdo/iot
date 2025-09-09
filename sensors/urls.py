@@ -1,0 +1,20 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # API overview
+    path('', views.api_overview, name='api-overview'),
+    
+    # Device endpoints
+    path('devices/', views.DeviceListCreateView.as_view(), name='device-list'),
+    path('devices/<str:device_id>/', views.DeviceDetailView.as_view(), name='device-detail'),
+    path('devices/<str:device_id>/readings/', views.device_readings, name='device-readings'),
+    
+    # Sensor data endpoints
+    path('sensors/bulk/', views.bulk_sensor_data, name='bulk-sensor-data'),
+    path('sensors/ecg/', views.ECGReadingListCreateView.as_view(), name='ecg-readings'),
+    path('sensors/pulse-oximeter/', views.PulseOximeterReadingListCreateView.as_view(), name='pulse-oximeter-readings'),
+    path('sensors/max30102/', views.MAX30102ReadingListCreateView.as_view(), name='max30102-readings'),
+    path('sensors/accelerometer/', views.AccelerometerReadingListCreateView.as_view(), name='accelerometer-readings'),
+    path('sensors/status/', views.DeviceStatusListCreateView.as_view(), name='device-status'),
+]
