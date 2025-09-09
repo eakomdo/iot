@@ -258,16 +258,20 @@ void sendSensorData() {
   if (httpResponseCode > 0) {
     String response = http.getString();
     Serial.println("HTTP Response code: " + String(httpResponseCode));
-    Serial.println("Response: " + response);
+    Serial.println("Server response: " + response);
     
     if (httpResponseCode == 201) {
-      Serial.println("Data sent successfully!");
+      Serial.println("✅ SUCCESS: Data uploaded to cloud!");
+      Serial.println("✅ Your sensor data is now stored in the database");
+    } else if (httpResponseCode == 200) {
+      Serial.println("✅ SUCCESS: Data processed successfully!");
     } else {
-      Serial.println("Server error: " + String(httpResponseCode));
+      Serial.println("⚠️  Server returned code: " + String(httpResponseCode));
     }
   } else {
-    Serial.println("HTTP Request failed: " + String(httpResponseCode));
-    Serial.println("Error: " + http.errorToString(httpResponseCode));
+    Serial.println("❌ HTTP Request failed: " + String(httpResponseCode));
+    Serial.println("❌ Error: " + http.errorToString(httpResponseCode));
+    Serial.println("❌ Check WiFi connection and server URL");
   }
   
   http.end();

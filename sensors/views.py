@@ -172,11 +172,11 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                     readings_created.append('device_status')
                 
                 return Response({
-                    'message': 'Sensor data received successfully',
+                    'success': True,
+                    'message': 'Sensor data received and stored successfully',
                     'device_id': device_id,
-                    'device_created': created,
-                    'readings_created': readings_created,
-                    'timestamp': timezone.now()
+                    'status': 'Data saved to database',
+                    'timestamp': timezone.now().isoformat()
                 }, status=status.HTTP_201_CREATED)
                 
         except (ValueError, KeyError, TypeError) as e:
@@ -220,35 +220,24 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
 def api_overview(request: HttpRequest) -> Response:
     """API endpoint overview"""
     return Response({
-        'message': 'IoT Sensor Data API',
+        'message': 'IoT Sensor Data Collection API - Ready for ESP32 Devices',
+        'status': 'operational',
         'version': '1.0',
         'endpoints': {
             'devices': '/api/devices/',
-            'bulk_sensor_data': '/api/sensors/bulk/',
+            'sensor_data_upload': '/api/sensors/bulk/',
             'device_readings': '/api/devices/{device_id}/readings/',
-            'ecg_readings': '/api/sensors/ecg/',
-            'pulse_oximeter_readings': '/api/sensors/pulse-oximeter/',
-            'max30102_readings': '/api/sensors/max30102/',
-            'accelerometer_readings': '/api/sensors/accelerometer/',
-            'device_status': '/api/sensors/status/',
+            'health_check': '/api/health/'
         },
-        'documentation': {
-            'bulk_data_format': {
-                'device_id': 'string (required)',
-                'ecg_heart_rate': 'float (optional)',
-                'ecg_value': 'float (optional)',
-                'spo2': 'float (optional)',
-                'pulse_heart_rate': 'float (optional)',
-                'max30102_heart_rate': 'float (optional)',
-                'red_value': 'int (optional)',
-                'ir_value': 'int (optional)',
-                'x_axis': 'float (optional)',
-                'y_axis': 'float (optional)',
-                'z_axis': 'float (optional)',
-                'battery_level': 'float (optional)',
-                'wifi_signal_strength': 'int (optional)',
-            }
-        }
+        'esp32_integration': {
+            'upload_url': '/api/sensors/bulk/',
+            'method': 'POST',
+            'content_type': 'application/json',
+            'required_field': 'device_id',
+            'response': 'Success message with timestamp'
+        },
+        'admin_panel': '/admin/',
+        'database': 'PostgreSQL - Ready for real sensor data'
     })
 
 
