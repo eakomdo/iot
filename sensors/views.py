@@ -430,12 +430,57 @@ def raw_sensor_values(request: HttpRequest, device_id: str) -> Response:
 # pylint: disable=unused-argument
 @api_view(['GET'])
 def api_overview(request: HttpRequest) -> Response:
-    """API endpoint overview"""
-    return Response({
-        'status': 'success',
-        'code': 200,
-        'message': 'OK'
-    })
+    """Live IoT system status - no JSON, no dummy data"""
+    try:
+        # Get live device count
+        # pylint: disable=no-member
+        device_count = Device.objects.count()  # type: ignore
+        active_devices = Device.objects.filter(is_active=True).count()  # type: ignore
+        
+        # Get latest sensor reading counts
+        ecg_count = ECGReading.objects.count()  # type: ignore
+        pulse_count = PulseOximeterReading.objects.count()  # type: ignore
+        max30102_count = MAX30102Reading.objects.count()  # type: ignore
+        accel_count = AccelerometerReading.objects.count()  # type: ignore
+        
+        # Get latest actual sensor values (not dummy data)
+        latest_ecg = "NO_DATA"
+        latest_spo2 = "NO_DATA"
+        latest_max30102 = "NO_DATA"
+        
+        try:
+            latest_ecg_reading = ECGReading.objects.latest('timestamp')  # type: ignore
+            if latest_ecg_reading.heart_rate > 0:
+                latest_ecg = str(latest_ecg_reading.heart_rate)
+        except ECGReading.DoesNotExist:  # type: ignore
+            pass
+            
+        try:
+            latest_pulse_reading = PulseOximeterReading.objects.latest('timestamp')  # type: ignore
+            if latest_pulse_reading.spo2 > 0:
+                latest_spo2 = str(latest_pulse_reading.spo2)
+        except PulseOximeterReading.DoesNotExist:  # type: ignore
+            pass
+            
+        try:
+            latest_max_reading = MAX30102Reading.objects.latest('timestamp')  # type: ignore
+            if latest_max_reading.heart_rate > 0:
+                latest_max30102 = str(latest_max_reading.heart_rate)
+        except MAX30102Reading.DoesNotExist:  # type: ignore
+            pass
+        
+        # Return live status as plain text
+        status_text = f"""LIVE IoT SYSTEM STATUS
+Devices: {device_count} total, {active_devices} active
+Readings: {ecg_count} ECG, {pulse_count} pulse, {max30102_count} MAX30102, {accel_count} accel
+Live Values: ECG={latest_ecg} SpO2={latest_spo2} MAX30102={latest_max30102}
+Endpoints: /api/ecg/ /api/spo2/ /api/max30102/ /api/accel/x/ /api/accel/y/ /api/accel/z/
+Upload: POST /api/sensors/bulk/"""
+        
+        return Response(status_text, content_type='text/plain', status=200)
+        
+    except Exception as e:
+        return Response(f"SYSTEM ERROR: {str(e)}", content_type='text/plain', status=500)
 
 
 @api_view(['GET'])
