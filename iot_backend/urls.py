@@ -16,8 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+from django.shortcuts import redirect
+
+def home_redirect(request):
+    """Redirect root URL to API"""
+    return redirect('/api/')
+
+def health_check(request):
+    """Root health check"""
+    return HttpResponse("IoT Sensor System - Live on Render", content_type="text/plain")
 
 urlpatterns = [
+    path('', home_redirect, name='home'),
+    path('health/', health_check, name='root-health'),
     path('admin/', admin.site.urls),
     path('api/', include('sensors.urls')),
 ]

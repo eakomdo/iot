@@ -250,3 +250,47 @@ def api_overview(request: HttpRequest) -> Response:
             }
         }
     })
+
+
+@api_view(['GET'])
+def health_check(request: HttpRequest) -> Response:
+    """Health check endpoint for monitoring deployment status"""
+    from django.db import connection
+    from django.utils import timezone
+    
+    try:
+        # Check database connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            db_status = "healthy"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    # Count total records
+    try:
+        device_count = Device.objects.count()  # type: ignore
+        ecg_count = ECGReading.objects.count()  # type: ignore
+        total_readings = (
+            ECGReading.objects.count() +  # type: ignore
+            PulseOximeterReading.objects.count() +  # type: ignore
+            MAX30102Reading.objects.count() +  # type: ignore
+            AccelerometerReading.objects.count() +  # type: ignore
+            DeviceStatus.objects.count()  # type: ignore
+        )
+    except Exception:
+        device_count = 0
+        ecg_count = 0
+        total_readings = 0
+    
+    return Response({
+        'status': 'healthy' if db_status == "healthy" else 'degraded',
+        'timestamp': timezone.now().isoformat(),
+        'database': db_status,
+        'statistics': {
+            'total_devices': device_count,
+            'total_readings': total_readings,
+            'ecg_readings': ecg_count,
+        },
+        'version': '1.0',
+        'deployment': 'render'
+    })

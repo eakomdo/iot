@@ -79,7 +79,7 @@ Click **"Add Environment Variable"** and add these one by one:
 | Key | Value |
 |-----|-------|
 | `DJANGO_DEBUG` | `False` |
-| `DJANGO_SECRET_KEY` | `your-super-secret-key-here-make-it-long-and-random` |
+| `DJANGO_SECRET_KEY` | `your-super-secret-key-here-make-it-long-and-random` |j7ef*dyv+c@=q3u2l=ft5nme8j=vz^p#29ygekxi7xx32ne=f_
 | `DATABASE_URL` | *(Leave empty - Render will auto-populate this)* |
 | `DJANGO_ALLOWED_HOSTS` | `*` |
 
@@ -107,17 +107,15 @@ Click **"Add Environment Variable"** and add these one by one:
 
 ## Step 3: Verify Deployment
 
-### 3.1: Check Your Live URL
-1. In Render dashboard, you'll see your service URL like:
-   `https://iot-sensor-backend-abc123.onrender.com`
-2. Click on it to open your API
+### 3.1: Check Your Live URL ✅ **COMPLETED!**
+Your service is live at: `https://iot-khgd.onrender.com`
 
-### 3.2: Test API Endpoints
-Your API endpoints will be available at:
-- **API Root**: `https://your-app-name.onrender.com/api/`
-- **Devices**: `https://your-app-name.onrender.com/api/devices/`
-- **Sensor Data**: `https://your-app-name.onrender.com/api/sensor-data/bulk/`
-- **Admin Panel**: `https://your-app-name.onrender.com/admin/`
+### 3.2: Test Your Live API Endpoints
+Your API endpoints are now available at:
+- **API Root**: `https://iot-khgd.onrender.com/api/`
+- **Devices**: `https://iot-khgd.onrender.com/api/devices/`
+- **Sensor Data**: `https://iot-khgd.onrender.com/api/sensor-data/bulk/`
+- **Admin Panel**: `https://iot-khgd.onrender.com/admin/`
 
 ### 3.3: Create Admin User (Important!)
 1. In Render Dashboard, go to your service
@@ -127,18 +125,19 @@ Your API endpoints will be available at:
    python manage.py createsuperuser
    ```
 4. Enter username, email, and password when prompted
-5. Now you can access admin at: `https://your-app-name.onrender.com/admin/`
+5. Now you can access admin at: `https://iot-khgd.onrender.com/admin/`
 
 ## Step 4: Update ESP32 Code
 
-Update your ESP32 code to use the new Render URL:
+✅ **ALREADY UPDATED!** Your ESP32 code now uses your live Render URL:
 
 ```cpp
-// Replace this line in your ESP32 code:
-const char* serverURL = "http://localhost:8000/api/sensor-data/bulk/";
+// Your ESP32 code is already configured with:
+const char* apiEndpoint = "https://iot-khgd.onrender.com/api/sensor-data/bulk/";
 
-// With your actual Render URL:
-const char* serverURL = "https://your-app-name.onrender.com/api/sensor-data/bulk/";
+// Just update your WiFi credentials:
+const char* ssid = "YOUR_WIFI_SSID";       // Replace with your WiFi name
+const char* password = "YOUR_WIFI_PASSWORD"; // Replace with your WiFi password
 ```
 
 ## Step 5: Monitor Your Application
@@ -160,10 +159,12 @@ const char* serverURL = "https://your-app-name.onrender.com/api/sensor-data/bulk
 
 Your IoT sensor system is now deployed and accessible worldwide!
 
-**Your URLs:**
-- **API**: `https://your-app-name.onrender.com/api/`
-- **Admin**: `https://your-app-name.onrender.com/admin/`
-- **Health Check**: `https://your-app-name.onrender.com/health/`
+**Your Live URLs:**
+- **API Root**: `https://iot-khgd.onrender.com/api/`
+- **Sensor Data Endpoint**: `https://iot-khgd.onrender.com/api/sensor-data/bulk/`
+- **Devices Endpoint**: `https://iot-khgd.onrender.com/api/devices/`
+- **Admin Panel**: `https://iot-khgd.onrender.com/admin/`
+- **Health Check**: `https://iot-khgd.onrender.com/health/`
 
 ## Troubleshooting Common Issues
 

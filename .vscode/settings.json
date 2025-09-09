@@ -11,5 +11,12 @@
     "python.analysis.extraPaths": [
         ".venv/lib/python3.12/site-packages"
     ],
-    "python.analysis.autoSearchPaths": true
+    "python.analysis.autoSearchPaths": true,
+    "files.associations": {
+        "*.ino": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
+    "arduino.path": "/snap/arduino/current",
+    "arduino.commandPath": "arduino"
 }

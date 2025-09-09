@@ -10,20 +10,31 @@
   And sends the data to a Django REST API hosted on Render
 */
 
-#include <WiFi.h>
-#include <HTTPClient.h>
+// Arduino IDE compatible includes
+#ifdef ARDUINO_ARCH_ESP32
+  #include <WiFi.h>
+  #include <HTTPClient.h>
+#else
+  // For VS Code IntelliSense (won't affect Arduino compilation)
+  typedef int WiFiClient;
+  typedef int HTTPClient;
+  #define WL_CONNECTED 3
+  #define WiFi_RSSI() (-50)
+#endif
+
 #include <ArduinoJson.h>
 #include <Wire.h>
+#include <math.h>
 
 // WiFi credentials
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 
-// API endpoint (Replace with your Render URL)
-const char* apiEndpoint = "https://your-app-name.onrender.com/api/sensors/bulk/";
+// API endpoint - Your live Render deployment
+const char* apiEndpoint = "https://iot-khgd.onrender.com/api/sensor-data/bulk/";
 
 // Device configuration
-String deviceId = "ESP32_001"; // Unique device identifier
+const String deviceId = "ESP32_001"; // Unique device identifier
 
 // Sensor pins (adjust according to your wiring)
 const int ECG_PIN = A0;
@@ -169,11 +180,11 @@ void readAllSensors() {
                                   pow(currentReading.z_axis, 2));
   
   // Read device status
-  currentReading.battery_level = random(70, 100);
+  currentReading.battery_level = (float)random(70, 100);
   currentReading.wifi_signal_strength = WiFi.RSSI();
-  currentReading.memory_usage = random(30, 80);
-  currentReading.cpu_temperature = random(35, 45);
-  currentReading.uptime_seconds = millis() / 1000;
+  currentReading.memory_usage = (float)random(30, 80);
+  currentReading.cpu_temperature = (float)random(35, 45);
+  currentReading.uptime_seconds = (int)(millis() / 1000);
   
   // Print sensor data to serial for debugging
   Serial.println("Sensor readings:");
@@ -194,8 +205,9 @@ void sendSensorData() {
   http.begin(apiEndpoint);
   http.addHeader("Content-Type", "application/json");
   
-  // Create JSON payload
-  DynamicJsonDocument doc(2048);
+  // Create JSON payload with proper error handling
+  const size_t JSON_BUFFER_SIZE = 2048;
+  DynamicJsonDocument doc(JSON_BUFFER_SIZE);
   doc["device_id"] = deviceId;
   
   // ECG data
@@ -229,9 +241,16 @@ void sendSensorData() {
   doc["uptime_seconds"] = currentReading.uptime_seconds;
   
   String jsonString;
-  serializeJson(doc, jsonString);
+  size_t jsonSize = serializeJson(doc, jsonString);
+  
+  if (jsonSize == 0) {
+    Serial.println("Failed to serialize JSON");
+    http.end();
+    return;
+  }
   
   Serial.println("Sending data to server...");
+  Serial.println("JSON Size: " + String(jsonSize) + " bytes");
   Serial.println("Payload: " + jsonString);
   
   int httpResponseCode = http.POST(jsonString);

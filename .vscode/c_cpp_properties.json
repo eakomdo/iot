@@ -1,0 +1,31 @@
+{
+  "configurations": [
+    {
+      "name": "ESP32 Arduino",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/.vscode/c_cpp_properties_temp/**",
+        "/home/eakomdo/.arduino15/packages/esp32/hardware/esp32/*/cores/esp32",
+        "/home/eakomdo/.arduino15/packages/esp32/hardware/esp32/*/libraries/**",
+        "/home/eakomdo/Arduino/libraries/**",
+        "/snap/arduino/current/libraries/**",
+        "/snap/arduino/current/hardware/arduino/avr/libraries/**"
+      ],
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_ESP32_DEV",
+        "ESP32",
+        "CORE_DEBUG_LEVEL=0",
+        "ARDUINO_ARCH_ESP32"
+      ],
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "gcc-x64",
+      "compilerArgs": [
+        "-mmcu=esp32"
+      ]
+    }
+  ],
+  "version": 4
+}
