@@ -484,6 +484,15 @@ Upload: POST /api/sensors/bulk/"""
 
 
 @api_view(['GET'])
+def live_status(request: HttpRequest) -> Response:
+    """NEW: Live IoT status endpoint to test deployment"""
+    from django.utils import timezone
+    current_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+    return Response(f"LIVE IOT STATUS - {current_time}\nDeployment: WORKING\nNo JSON, No dummy data", 
+                   content_type='text/plain', status=200)
+
+
+@api_view(['GET'])
 def health_check(request: HttpRequest) -> Response:
     """Health check endpoint for monitoring deployment status"""
     from django.db import connection

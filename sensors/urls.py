@@ -8,6 +8,9 @@ urlpatterns = [
     # Health check
     path('health/', views.health_check, name='health-check'),
     
+    # NEW: Test endpoint to verify deployment
+    path('live/', views.live_status, name='live-status'),
+    
     # Device endpoints
     path('devices/', views.DeviceListCreateView.as_view(), name='device-list'),
     path('devices/simple/', views.simple_device_list, name='simple-device-list'),
