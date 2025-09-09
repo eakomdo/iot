@@ -155,44 +155,76 @@ void initSensors() {
 }
 
 void readAllSensors() {
-  // Read ECG sensor (simulated values - replace with actual sensor code)
-  currentReading.ecg_value = analogRead(ECG_PIN) * (3.3 / 4095.0); // Convert to voltage
-  currentReading.ecg_heart_rate = 70 + random(-10, 11); // Simulated heart rate
-  currentReading.ecg_signal_quality = "good";
+  // Initialize all readings to zero - will be filled by actual sensors when connected
   
-  // Read Pulse Oximeter (simulated values)
-  currentReading.spo2 = 95.0 + random(-3, 4);
-  currentReading.pulse_heart_rate = 68 + random(-8, 9);
-  currentReading.pulse_signal_strength = random(70, 100);
+  // ECG sensor readings (ready for real sensor connection)
+  currentReading.ecg_value = 0.0; // Will be filled by actual ECG sensor
+  currentReading.ecg_heart_rate = 0.0; // Will be filled by ECG processing
+  currentReading.ecg_signal_quality = "waiting"; // Will show sensor status
   
-  // Read MAX30102 sensor (simulated values)
-  currentReading.max30102_heart_rate = 72 + random(-8, 9);
-  currentReading.max30102_spo2 = 96.0 + random(-2, 3);
-  currentReading.red_value = random(10000, 50000);
-  currentReading.ir_value = random(15000, 60000);
-  currentReading.temperature = 36.5 + random(-1, 2);
+  // Pulse Oximeter readings (ready for real sensor connection)
+  currentReading.spo2 = 0.0; // Will be filled by pulse oximeter
+  currentReading.pulse_heart_rate = 0.0; // Will be filled by pulse sensor
+  currentReading.pulse_signal_strength = 0; // Will show signal quality
   
-  // Read Accelerometer (simulated values)
-  currentReading.x_axis = (random(-200, 201) / 100.0);
-  currentReading.y_axis = (random(-200, 201) / 100.0);
-  currentReading.z_axis = 9.8 + (random(-50, 51) / 100.0);
-  currentReading.magnitude = sqrt(pow(currentReading.x_axis, 2) + 
-                                  pow(currentReading.y_axis, 2) + 
-                                  pow(currentReading.z_axis, 2));
+  // MAX30102 sensor readings (ready for real sensor connection)
+  currentReading.max30102_heart_rate = 0.0; // Will be filled by MAX30102
+  currentReading.max30102_spo2 = 0.0; // Will be filled by MAX30102
+  currentReading.red_value = 0; // Will be filled by MAX30102 red LED
+  currentReading.ir_value = 0; // Will be filled by MAX30102 IR LED
+  currentReading.temperature = 0.0; // Will be filled by MAX30102 temp sensor
   
-  // Read device status
-  currentReading.battery_level = (float)random(70, 100);
-  currentReading.wifi_signal_strength = WiFi.RSSI();
-  currentReading.memory_usage = (float)random(30, 80);
-  currentReading.cpu_temperature = (float)random(35, 45);
-  currentReading.uptime_seconds = (int)(millis() / 1000);
+  // Accelerometer readings (ready for real sensor connection)
+  currentReading.x_axis = 0.0; // Will be filled by accelerometer X
+  currentReading.y_axis = 0.0; // Will be filled by accelerometer Y
+  currentReading.z_axis = 0.0; // Will be filled by accelerometer Z
+  currentReading.magnitude = 0.0; // Will be calculated from X,Y,Z
   
-  // Print sensor data to serial for debugging
-  Serial.println("Sensor readings:");
-  Serial.println("  ECG: " + String(currentReading.ecg_heart_rate) + " BPM, Value: " + String(currentReading.ecg_value));
-  Serial.println("  Pulse Ox: SpO2 " + String(currentReading.spo2) + "%, HR " + String(currentReading.pulse_heart_rate) + " BPM");
-  Serial.println("  MAX30102: HR " + String(currentReading.max30102_heart_rate) + " BPM, SpO2 " + String(currentReading.max30102_spo2) + "%");
-  Serial.println("  Accel: X=" + String(currentReading.x_axis) + ", Y=" + String(currentReading.y_axis) + ", Z=" + String(currentReading.z_axis));
+  // TODO: CONNECT YOUR REAL SENSORS HERE
+  // Uncomment and modify these sections when you connect actual hardware:
+  
+  /*
+  // REAL ECG SENSOR (AD8232) - Uncomment when connected:
+  // currentReading.ecg_value = analogRead(ECG_PIN) * (3.3 / 4095.0);
+  // currentReading.ecg_heart_rate = calculateHeartRateFromECG();
+  // currentReading.ecg_signal_quality = "good";
+  
+  // REAL PULSE OXIMETER - Uncomment when connected:
+  // currentReading.spo2 = pulseOximeter.getSpO2();
+  // currentReading.pulse_heart_rate = pulseOximeter.getHeartRate();
+  // currentReading.pulse_signal_strength = pulseOximeter.getSignalStrength();
+  
+  // REAL MAX30102 SENSOR - Uncomment when connected:
+  // currentReading.max30102_heart_rate = particleSensor.getHeartRate();
+  // currentReading.max30102_spo2 = particleSensor.getSpO2();
+  // currentReading.red_value = particleSensor.getRed();
+  // currentReading.ir_value = particleSensor.getIR();
+  // currentReading.temperature = particleSensor.readTemperature();
+  
+  // REAL ACCELEROMETER (MPU6050) - Uncomment when connected:
+  // int16_t ax, ay, az;
+  // accel.getAcceleration(&ax, &ay, &az);
+  // currentReading.x_axis = ax / 16384.0;  // Convert to g
+  // currentReading.y_axis = ay / 16384.0;
+  // currentReading.z_axis = az / 16384.0;
+  // currentReading.magnitude = sqrt(pow(currentReading.x_axis, 2) + 
+  //                                 pow(currentReading.y_axis, 2) + 
+  //                                 pow(currentReading.z_axis, 2));
+  */
+  
+  // Device status (always available)
+  currentReading.battery_level = (float)random(70, 100); // Simulated for now
+  currentReading.wifi_signal_strength = WiFi.RSSI(); // Real WiFi signal
+  currentReading.memory_usage = (float)random(30, 80); // Simulated for now
+  currentReading.cpu_temperature = (float)random(35, 45); // Simulated for now
+  currentReading.uptime_seconds = (int)(millis() / 1000); // Real uptime
+  
+  // Print sensor status to serial for debugging
+  Serial.println("Sensor Status:");
+  Serial.println("  ECG: " + String(currentReading.ecg_heart_rate) + " BPM (0 = no sensor)");
+  Serial.println("  Pulse Ox: SpO2 " + String(currentReading.spo2) + "%, HR " + String(currentReading.pulse_heart_rate) + " BPM (0 = no sensor)");
+  Serial.println("  MAX30102: HR " + String(currentReading.max30102_heart_rate) + " BPM (0 = no sensor)");
+  Serial.println("  Accel: X=" + String(currentReading.x_axis) + ", Y=" + String(currentReading.y_axis) + ", Z=" + String(currentReading.z_axis) + " (0 = no sensor)");
   Serial.println("  Battery: " + String(currentReading.battery_level) + "%");
 }
 

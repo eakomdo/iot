@@ -172,31 +172,32 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                     readings_created.append('device_status')
                 
                 # Return only raw sensor values - no device names, one per line
+                # Only include non-zero values (actual sensor readings)
                 response_values = []
                 
-                # ECG readings - just the numbers
-                if data.get('ecg_heart_rate'):
+                # ECG readings - only if sensor is connected (non-zero)
+                if data.get('ecg_heart_rate') and data.get('ecg_heart_rate') > 0:
                     response_values.append(str(data['ecg_heart_rate']))
                 
-                # Pulse Oximeter readings - just the numbers  
-                if data.get('spo2'):
+                # Pulse Oximeter readings - only if sensor is connected
+                if data.get('spo2') and data.get('spo2') > 0:
                     response_values.append(str(data['spo2']))
                 
-                if data.get('pulse_heart_rate'):
+                if data.get('pulse_heart_rate') and data.get('pulse_heart_rate') > 0:
                     response_values.append(str(data['pulse_heart_rate']))
                 
-                # MAX30102 Heart Rate - just the number
-                if data.get('max30102_heart_rate'):
+                # MAX30102 Heart Rate - only if sensor is connected
+                if data.get('max30102_heart_rate') and data.get('max30102_heart_rate') > 0:
                     response_values.append(str(data['max30102_heart_rate']))
                 
-                # Accelerometer readings - just the numbers
-                if data.get('x_axis') is not None:
+                # Accelerometer readings - only if sensor is connected (non-zero)
+                if data.get('x_axis') is not None and data.get('x_axis') != 0:
                     response_values.append(str(data['x_axis']))
                 
-                if data.get('y_axis') is not None:
+                if data.get('y_axis') is not None and data.get('y_axis') != 0:
                     response_values.append(str(data['y_axis']))
                 
-                if data.get('z_axis') is not None:
+                if data.get('z_axis') is not None and data.get('z_axis') != 0:
                     response_values.append(str(data['z_axis']))
                 
                 # Create plain text response - each value on new line
@@ -206,7 +207,8 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                                   status=status.HTTP_201_CREATED,
                                   content_type='text/plain')
                 else:
-                    return Response("OK", 
+                    # No sensors connected - return status message
+                    return Response("WAITING_FOR_SENSORS", 
                                   status=status.HTTP_201_CREATED,
                                   content_type='text/plain')
                 
