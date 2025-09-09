@@ -26,10 +26,10 @@ urlpatterns = [
     path('sensors/status/', views.DeviceStatusListCreateView.as_view(), name='device-status'),
     
     # Individual sensor value endpoints - return just single values
-    path('sensors/ecg/value/', views.get_latest_ecg_value, name='ecg-value'),
-    path('sensors/spo2/value/', views.get_latest_spo2_value, name='spo2-value'), 
-    path('sensors/max30102/value/', views.get_latest_max30102_value, name='max30102-value'),
-    path('sensors/accelerometer/x/', views.get_latest_accelerometer_x, name='accel-x'),
-    path('sensors/accelerometer/y/', views.get_latest_accelerometer_y, name='accel-y'),
-    path('sensors/accelerometer/z/', views.get_latest_accelerometer_z, name='accel-z'),
+    path('ecg/', views.ecg_value, name='ecg-value'),
+    path('spo2/', views.spo2_value, name='spo2-value'), 
+    path('max30102/', views.max30102_value, name='max30102-value'),
+    path('accel/x/', views.accel_x_value, name='accel-x'),
+    path('accel/y/', views.accel_y_value, name='accel-y'),
+    path('accel/z/', views.accel_z_value, name='accel-z'),
 ]
