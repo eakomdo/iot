@@ -171,11 +171,58 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                     )
                     readings_created.append('device_status')
                 
-                return Response({
-                    'status': 'success',
-                    'code': 201,
-                    'message': 'Created'
-                }, status=status.HTTP_201_CREATED)
+                # Create simple response with actual sensor values
+                response_data = []
+                
+                # Add actual sensor readings to response
+                if data.get('ecg_heart_rate'):
+                    response_data.append(f"ECG Heart Rate: {data['ecg_heart_rate']} BPM")
+                
+                if data.get('ecg_value'):
+                    response_data.append(f"ECG Value: {data['ecg_value']}")
+                
+                if data.get('spo2'):
+                    response_data.append(f"SpO2: {data['spo2']}%")
+                
+                if data.get('pulse_heart_rate'):
+                    response_data.append(f"Pulse Rate: {data['pulse_heart_rate']} BPM")
+                
+                if data.get('max30102_heart_rate'):
+                    response_data.append(f"MAX30102 Heart Rate: {data['max30102_heart_rate']} BPM")
+                
+                if data.get('red_value'):
+                    response_data.append(f"Red Value: {data['red_value']}")
+                
+                if data.get('ir_value'):
+                    response_data.append(f"IR Value: {data['ir_value']}")
+                
+                if data.get('x_axis') is not None:
+                    response_data.append(f"X-Axis: {data['x_axis']} g")
+                
+                if data.get('y_axis') is not None:
+                    response_data.append(f"Y-Axis: {data['y_axis']} g")
+                
+                if data.get('z_axis') is not None:
+                    response_data.append(f"Z-Axis: {data['z_axis']} g")
+                
+                if data.get('battery_level'):
+                    response_data.append(f"Battery: {data['battery_level']}%")
+                
+                if data.get('wifi_signal_strength'):
+                    response_data.append(f"WiFi Signal: {data['wifi_signal_strength']} dBm")
+                
+                # Return simple text response with actual values
+                if response_data:
+                    return Response({
+                        'message': f"✅ Data received successfully from {device_id}",
+                        'readings': response_data,
+                        'timestamp': timezone.now().isoformat()
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({
+                        'message': f"✅ Device {device_id} connected successfully",
+                        'note': 'No sensor readings provided'
+                    }, status=status.HTTP_201_CREATED)
                 
         except (ValueError, KeyError, TypeError) as e:
             return Response({
@@ -218,6 +265,87 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
         'code': 200,
         'message': 'OK'
     })
+
+
+@api_view(['GET'])
+def latest_readings(request: HttpRequest, device_id: str) -> Response:
+    """Get the latest sensor readings in simple value format"""
+    try:
+        # pylint: disable=no-member
+        device = Device.objects.get(device_id=device_id)  # type: ignore
+    except Device.DoesNotExist:  # type: ignore
+        return Response({
+            'error': f'Device {device_id} not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    readings = []
+    
+    # Get latest readings for each sensor type
+    try:
+        # pylint: disable=no-member
+        latest_ecg = ECGReading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_ecg.heart_rate:
+            readings.append(f"ECG Heart Rate: {latest_ecg.heart_rate} BPM")
+        if latest_ecg.ecg_value:
+            readings.append(f"ECG Value: {latest_ecg.ecg_value}")
+    except ECGReading.DoesNotExist:  # type: ignore
+        pass
+    
+    try:
+        # pylint: disable=no-member
+        latest_pulse = PulseOximeterReading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_pulse.spo2:
+            readings.append(f"SpO2: {latest_pulse.spo2}%")
+        if latest_pulse.heart_rate:
+            readings.append(f"Pulse Rate: {latest_pulse.heart_rate} BPM")
+    except PulseOximeterReading.DoesNotExist:  # type: ignore
+        pass
+    
+    try:
+        # pylint: disable=no-member
+        latest_max30102 = MAX30102Reading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_max30102.heart_rate:
+            readings.append(f"MAX30102 Heart Rate: {latest_max30102.heart_rate} BPM")
+        if latest_max30102.red_value:
+            readings.append(f"Red Value: {latest_max30102.red_value}")
+        if latest_max30102.ir_value:
+            readings.append(f"IR Value: {latest_max30102.ir_value}")
+    except MAX30102Reading.DoesNotExist:  # type: ignore
+        pass
+    
+    try:
+        # pylint: disable=no-member
+        latest_accel = AccelerometerReading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        readings.append(f"X-Axis: {latest_accel.x_axis} g")
+        readings.append(f"Y-Axis: {latest_accel.y_axis} g") 
+        readings.append(f"Z-Axis: {latest_accel.z_axis} g")
+        readings.append(f"Magnitude: {latest_accel.magnitude:.2f} g")
+    except AccelerometerReading.DoesNotExist:  # type: ignore
+        pass
+    
+    try:
+        # pylint: disable=no-member
+        latest_status = DeviceStatus.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_status.battery_level:
+            readings.append(f"Battery: {latest_status.battery_level}%")
+        if latest_status.wifi_signal_strength:
+            readings.append(f"WiFi Signal: {latest_status.wifi_signal_strength} dBm")
+    except DeviceStatus.DoesNotExist:  # type: ignore
+        pass
+    
+    if readings:
+        return Response({
+            'device': device_id,
+            'latest_readings': readings,
+            'last_seen': device.last_seen.isoformat(),
+            'status': 'active' if device.is_active else 'inactive'
+        })
+    else:
+        return Response({
+            'device': device_id,
+            'message': 'No sensor readings available yet',
+            'last_seen': device.last_seen.isoformat() if device.last_seen else None
+        })
 
 
 # pylint: disable=unused-argument

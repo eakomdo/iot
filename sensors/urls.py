@@ -12,6 +12,7 @@ urlpatterns = [
     path('devices/', views.DeviceListCreateView.as_view(), name='device-list'),
     path('devices/<str:device_id>/', views.DeviceDetailView.as_view(), name='device-detail'),
     path('devices/<str:device_id>/readings/', views.device_readings, name='device-readings'),
+    path('devices/<str:device_id>/latest/', views.latest_readings, name='latest-readings'),
     
     # Sensor data endpoints - Multiple URL patterns for compatibility
     path('sensors/bulk/', views.bulk_sensor_data, name='bulk-sensor-data'),

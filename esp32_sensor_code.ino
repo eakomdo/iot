@@ -44,8 +44,9 @@ const int MAX30102_SCL = 22;
 // Timing variables
 unsigned long lastSensorRead = 0;
 unsigned long lastDataSend = 0;
-const unsigned long SENSOR_INTERVAL = 1000; // Read sensors every 1 second
-const unsigned long SEND_INTERVAL = 10000; // Send data every 10 seconds
+// Timing configuration for real-time data transmission
+const unsigned long SENSOR_INTERVAL = 500;  // Read sensors every 0.5 seconds - more responsive
+const unsigned long SEND_INTERVAL = 3000;   // Send data every 3 seconds - more frequent updates
 
 // Sensor data structures
 struct SensorData {
@@ -259,13 +260,56 @@ void sendSensorData() {
     String response = http.getString();
     Serial.println("HTTP Response Code: " + String(httpResponseCode));
     
-    // Handle different HTTP status codes
+    // Handle different HTTP status codes and show readable response
     switch (httpResponseCode) {
       case 200:
         Serial.println("✅ 200 OK - Request successful");
         break;
       case 201:
         Serial.println("✅ 201 CREATED - Data stored successfully");
+        
+        // Parse and display the readable sensor values from response
+        if (response.length() > 0) {
+          Serial.println("\n📊 Server Response:");
+          
+          // Try to extract readable data from JSON response
+          int messageStart = response.indexOf("\"message\":\"");
+          int readingsStart = response.indexOf("\"readings\":[");
+          
+          if (messageStart != -1) {
+            int messageEnd = response.indexOf("\"", messageStart + 11);
+            String message = response.substring(messageStart + 11, messageEnd);
+            Serial.println(message);
+          }
+          
+          if (readingsStart != -1) {
+            int readingsEnd = response.indexOf("]", readingsStart);
+            String readingsStr = response.substring(readingsStart + 12, readingsEnd);
+            
+            // Remove quotes and split by comma to show each reading
+            readingsStr.replace("\"", "");
+            int lastIndex = 0;
+            int index = readingsStr.indexOf(",");
+            
+            while (index != -1) {
+              String reading = readingsStr.substring(lastIndex, index);
+              reading.trim();
+              if (reading.length() > 0) {
+                Serial.println("  📈 " + reading);
+              }
+              lastIndex = index + 1;
+              index = readingsStr.indexOf(",", lastIndex);
+            }
+            
+            // Print the last reading
+            String lastReading = readingsStr.substring(lastIndex);
+            lastReading.trim();
+            if (lastReading.length() > 0) {
+              Serial.println("  📈 " + lastReading);
+            }
+          }
+          Serial.println(""); // Empty line for readability
+        }
         break;
       case 400:
         Serial.println("❌ 400 BAD REQUEST - Invalid data format");
