@@ -171,58 +171,44 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                     )
                     readings_created.append('device_status')
                 
-                # Create simple response with actual sensor values
-                response_data = []
+                # Return only raw sensor values - no JSON, just plain text
+                response_values = []
                 
-                # Add actual sensor readings to response
+                # ECG readings - just the numbers
                 if data.get('ecg_heart_rate'):
-                    response_data.append(f"ECG Heart Rate: {data['ecg_heart_rate']} BPM")
+                    response_values.append(f"ECG: {data['ecg_heart_rate']}")
                 
-                if data.get('ecg_value'):
-                    response_data.append(f"ECG Value: {data['ecg_value']}")
-                
+                # Pulse Oximeter readings - just the numbers  
                 if data.get('spo2'):
-                    response_data.append(f"SpO2: {data['spo2']}%")
+                    response_values.append(f"SpO2: {data['spo2']}")
                 
                 if data.get('pulse_heart_rate'):
-                    response_data.append(f"Pulse Rate: {data['pulse_heart_rate']} BPM")
+                    response_values.append(f"Pulse: {data['pulse_heart_rate']}")
                 
+                # MAX30102 Heart Rate - just the number
                 if data.get('max30102_heart_rate'):
-                    response_data.append(f"MAX30102 Heart Rate: {data['max30102_heart_rate']} BPM")
+                    response_values.append(f"MAX30102: {data['max30102_heart_rate']}")
                 
-                if data.get('red_value'):
-                    response_data.append(f"Red Value: {data['red_value']}")
-                
-                if data.get('ir_value'):
-                    response_data.append(f"IR Value: {data['ir_value']}")
-                
+                # Accelerometer readings - just the numbers
                 if data.get('x_axis') is not None:
-                    response_data.append(f"X-Axis: {data['x_axis']} g")
+                    response_values.append(f"X: {data['x_axis']}")
                 
                 if data.get('y_axis') is not None:
-                    response_data.append(f"Y-Axis: {data['y_axis']} g")
+                    response_values.append(f"Y: {data['y_axis']}")
                 
                 if data.get('z_axis') is not None:
-                    response_data.append(f"Z-Axis: {data['z_axis']} g")
+                    response_values.append(f"Z: {data['z_axis']}")
                 
-                if data.get('battery_level'):
-                    response_data.append(f"Battery: {data['battery_level']}%")
-                
-                if data.get('wifi_signal_strength'):
-                    response_data.append(f"WiFi Signal: {data['wifi_signal_strength']} dBm")
-                
-                # Return simple text response with actual values
-                if response_data:
-                    return Response({
-                        'message': f"✅ Data received successfully from {device_id}",
-                        'readings': response_data,
-                        'timestamp': timezone.now().isoformat()
-                    }, status=status.HTTP_201_CREATED)
+                # Create plain text response - no JSON structure
+                if response_values:
+                    plain_text_response = " | ".join(response_values)
+                    return Response(plain_text_response, 
+                                  status=status.HTTP_201_CREATED,
+                                  content_type='text/plain')
                 else:
-                    return Response({
-                        'message': f"✅ Device {device_id} connected successfully",
-                        'note': 'No sensor readings provided'
-                    }, status=status.HTTP_201_CREATED)
+                    return Response("OK", 
+                                  status=status.HTTP_201_CREATED,
+                                  content_type='text/plain')
                 
         except (ValueError, KeyError, TypeError) as e:
             return Response({
@@ -268,7 +254,65 @@ def device_readings(request: HttpRequest, device_id: str) -> Response:
 
 
 @api_view(['GET'])
-def latest_readings(request: HttpRequest, device_id: str) -> Response:
+def raw_sensor_values(request: HttpRequest, device_id: str) -> Response:
+    """Get raw sensor values - just numbers, no JSON"""
+    try:
+        # pylint: disable=no-member
+        device = Device.objects.get(device_id=device_id)  # type: ignore
+    except Device.DoesNotExist:  # type: ignore
+        return Response("Device not found", 
+                       status=status.HTTP_404_NOT_FOUND,
+                       content_type='text/plain')
+    
+    values = []
+    
+    # Get latest ECG reading - just the number
+    try:
+        # pylint: disable=no-member
+        latest_ecg = ECGReading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_ecg.heart_rate:
+            values.append(str(latest_ecg.heart_rate))
+    except ECGReading.DoesNotExist:  # type: ignore
+        values.append("0")
+    
+    # Get latest Pulse Oximeter reading - just the number
+    try:
+        # pylint: disable=no-member
+        latest_pulse = PulseOximeterReading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_pulse.spo2:
+            values.append(str(latest_pulse.spo2))
+        else:
+            values.append("0")
+    except PulseOximeterReading.DoesNotExist:  # type: ignore
+        values.append("0")
+    
+    # Get latest MAX30102 reading - just the number
+    try:
+        # pylint: disable=no-member
+        latest_max30102 = MAX30102Reading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        if latest_max30102.heart_rate:
+            values.append(str(latest_max30102.heart_rate))
+        else:
+            values.append("0")
+    except MAX30102Reading.DoesNotExist:  # type: ignore
+        values.append("0")
+    
+    # Get latest Accelerometer reading - just X,Y,Z values
+    try:
+        # pylint: disable=no-member
+        latest_accel = AccelerometerReading.objects.filter(device=device).latest('timestamp')  # type: ignore
+        values.append(str(latest_accel.x_axis))
+        values.append(str(latest_accel.y_axis)) 
+        values.append(str(latest_accel.z_axis))
+    except AccelerometerReading.DoesNotExist:  # type: ignore
+        values.extend(["0", "0", "0"])
+    
+    # Return just comma-separated values: ECG,SpO2,MAX30102,X,Y,Z
+    return Response(",".join(values), 
+                   status=status.HTTP_200_OK,
+                   content_type='text/plain')
+
+
     """Get the latest sensor readings in simple value format"""
     try:
         # pylint: disable=no-member

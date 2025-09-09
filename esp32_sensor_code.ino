@@ -260,52 +260,44 @@ void sendSensorData() {
     String response = http.getString();
     Serial.println("HTTP Response Code: " + String(httpResponseCode));
     
-    // Handle different HTTP status codes and show readable response
+    // Handle different HTTP status codes
     switch (httpResponseCode) {
       case 200:
         Serial.println("✅ 200 OK - Request successful");
+        if (response.length() > 0) {
+          Serial.println("📊 Raw Sensor Values: " + response);
+        }
         break;
       case 201:
         Serial.println("✅ 201 CREATED - Data stored successfully");
         
-        // Parse and display the readable sensor values from response
+        // Display the raw sensor values (no JSON parsing needed)
         if (response.length() > 0) {
-          Serial.println("\n📊 Server Response:");
+          Serial.println("📊 Real-time Values: " + response);
           
-          // Try to extract readable data from JSON response
-          int messageStart = response.indexOf("\"message\":\"");
-          int readingsStart = response.indexOf("\"readings\":[");
-          
-          if (messageStart != -1) {
-            int messageEnd = response.indexOf("\"", messageStart + 11);
-            String message = response.substring(messageStart + 11, messageEnd);
-            Serial.println(message);
-          }
-          
-          if (readingsStart != -1) {
-            int readingsEnd = response.indexOf("]", readingsStart);
-            String readingsStr = response.substring(readingsStart + 12, readingsEnd);
+          // If response contains plain text values, display them clearly
+          if (response.indexOf("ECG:") != -1 || response.indexOf("|") != -1) {
+            Serial.println("🔴 Live Readings:");
             
-            // Remove quotes and split by comma to show each reading
-            readingsStr.replace("\"", "");
+            // Split by | and display each sensor value
             int lastIndex = 0;
-            int index = readingsStr.indexOf(",");
+            int index = response.indexOf("|");
             
             while (index != -1) {
-              String reading = readingsStr.substring(lastIndex, index);
-              reading.trim();
-              if (reading.length() > 0) {
-                Serial.println("  📈 " + reading);
+              String value = response.substring(lastIndex, index);
+              value.trim();
+              if (value.length() > 0) {
+                Serial.println("  " + value);
               }
               lastIndex = index + 1;
-              index = readingsStr.indexOf(",", lastIndex);
+              index = response.indexOf("|", lastIndex);
             }
             
-            // Print the last reading
-            String lastReading = readingsStr.substring(lastIndex);
-            lastReading.trim();
-            if (lastReading.length() > 0) {
-              Serial.println("  📈 " + lastReading);
+            // Print the last value
+            String lastValue = response.substring(lastIndex);
+            lastValue.trim();
+            if (lastValue.length() > 0) {
+              Serial.println("  " + lastValue);
             }
           }
           Serial.println(""); // Empty line for readability
