@@ -1,0 +1,12 @@
+services:
+  # FastAPI IoT Sensor Service
+  - type: web
+    name: iot-sensors-fastapi
+    env: python
+    plan: free
+    buildCommand: pip install -r fastapi_requirements.txt
+    startCommand: python fastapi_iot_server.py
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
