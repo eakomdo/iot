@@ -476,3 +476,76 @@ def health_check(request: HttpRequest) -> Response:
         'code': 200 if is_healthy else 503,
         'message': 'OK' if is_healthy else 'Service Unavailable'
     }, status=http_status)
+
+
+# Individual sensor value endpoints - return just the single value
+@api_view(['GET'])
+def get_latest_ecg_value(request: HttpRequest) -> Response:
+    """Get just the latest ECG heart rate value"""
+    try:
+        # pylint: disable=no-member
+        latest_ecg = ECGReading.objects.latest('timestamp')  # type: ignore
+        value = str(latest_ecg.heart_rate) if latest_ecg.heart_rate else "0"
+        return Response(value, content_type='text/plain')
+    except ECGReading.DoesNotExist:  # type: ignore
+        return Response("0", content_type='text/plain')
+
+
+@api_view(['GET'])
+def get_latest_spo2_value(request: HttpRequest) -> Response:
+    """Get just the latest SpO2 value"""
+    try:
+        # pylint: disable=no-member
+        latest_pulse = PulseOximeterReading.objects.latest('timestamp')  # type: ignore
+        value = str(latest_pulse.spo2) if latest_pulse.spo2 else "0"
+        return Response(value, content_type='text/plain')
+    except PulseOximeterReading.DoesNotExist:  # type: ignore
+        return Response("0", content_type='text/plain')
+
+
+@api_view(['GET'])
+def get_latest_max30102_value(request: HttpRequest) -> Response:
+    """Get just the latest MAX30102 heart rate value"""
+    try:
+        # pylint: disable=no-member
+        latest_max = MAX30102Reading.objects.latest('timestamp')  # type: ignore
+        value = str(latest_max.heart_rate) if latest_max.heart_rate else "0"
+        return Response(value, content_type='text/plain')
+    except MAX30102Reading.DoesNotExist:  # type: ignore
+        return Response("0", content_type='text/plain')
+
+
+@api_view(['GET'])
+def get_latest_accelerometer_x(request: HttpRequest) -> Response:
+    """Get just the latest X-axis accelerometer value"""
+    try:
+        # pylint: disable=no-member
+        latest_accel = AccelerometerReading.objects.latest('timestamp')  # type: ignore
+        value = str(latest_accel.x_axis)
+        return Response(value, content_type='text/plain')
+    except AccelerometerReading.DoesNotExist:  # type: ignore
+        return Response("0", content_type='text/plain')
+
+
+@api_view(['GET'])
+def get_latest_accelerometer_y(request: HttpRequest) -> Response:
+    """Get just the latest Y-axis accelerometer value"""
+    try:
+        # pylint: disable=no-member
+        latest_accel = AccelerometerReading.objects.latest('timestamp')  # type: ignore
+        value = str(latest_accel.y_axis)
+        return Response(value, content_type='text/plain')
+    except AccelerometerReading.DoesNotExist:  # type: ignore
+        return Response("0", content_type='text/plain')
+
+
+@api_view(['GET'])
+def get_latest_accelerometer_z(request: HttpRequest) -> Response:
+    """Get just the latest Z-axis accelerometer value"""
+    try:
+        # pylint: disable=no-member
+        latest_accel = AccelerometerReading.objects.latest('timestamp')  # type: ignore
+        value = str(latest_accel.z_axis)
+        return Response(value, content_type='text/plain')
+    except AccelerometerReading.DoesNotExist:  # type: ignore
+        return Response("0", content_type='text/plain')

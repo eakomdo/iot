@@ -24,4 +24,12 @@ urlpatterns = [
     path('sensors/max30102/', views.MAX30102ReadingListCreateView.as_view(), name='max30102-readings'),
     path('sensors/accelerometer/', views.AccelerometerReadingListCreateView.as_view(), name='accelerometer-readings'),
     path('sensors/status/', views.DeviceStatusListCreateView.as_view(), name='device-status'),
+    
+    # Individual sensor value endpoints - return just single values
+    path('sensors/ecg/value/', views.get_latest_ecg_value, name='ecg-value'),
+    path('sensors/spo2/value/', views.get_latest_spo2_value, name='spo2-value'), 
+    path('sensors/max30102/value/', views.get_latest_max30102_value, name='max30102-value'),
+    path('sensors/accelerometer/x/', views.get_latest_accelerometer_x, name='accel-x'),
+    path('sensors/accelerometer/y/', views.get_latest_accelerometer_y, name='accel-y'),
+    path('sensors/accelerometer/z/', views.get_latest_accelerometer_z, name='accel-z'),
 ]
