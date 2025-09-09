@@ -171,37 +171,37 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
                     )
                     readings_created.append('device_status')
                 
-                # Return only raw sensor values - no JSON, just plain text
+                # Return only raw sensor values - no device names, one per line
                 response_values = []
                 
                 # ECG readings - just the numbers
                 if data.get('ecg_heart_rate'):
-                    response_values.append(f"ECG: {data['ecg_heart_rate']}")
+                    response_values.append(str(data['ecg_heart_rate']))
                 
                 # Pulse Oximeter readings - just the numbers  
                 if data.get('spo2'):
-                    response_values.append(f"SpO2: {data['spo2']}")
+                    response_values.append(str(data['spo2']))
                 
                 if data.get('pulse_heart_rate'):
-                    response_values.append(f"Pulse: {data['pulse_heart_rate']}")
+                    response_values.append(str(data['pulse_heart_rate']))
                 
                 # MAX30102 Heart Rate - just the number
                 if data.get('max30102_heart_rate'):
-                    response_values.append(f"MAX30102: {data['max30102_heart_rate']}")
+                    response_values.append(str(data['max30102_heart_rate']))
                 
                 # Accelerometer readings - just the numbers
                 if data.get('x_axis') is not None:
-                    response_values.append(f"X: {data['x_axis']}")
+                    response_values.append(str(data['x_axis']))
                 
                 if data.get('y_axis') is not None:
-                    response_values.append(f"Y: {data['y_axis']}")
+                    response_values.append(str(data['y_axis']))
                 
                 if data.get('z_axis') is not None:
-                    response_values.append(f"Z: {data['z_axis']}")
+                    response_values.append(str(data['z_axis']))
                 
-                # Create plain text response - no JSON structure
+                # Create plain text response - each value on new line
                 if response_values:
-                    plain_text_response = " | ".join(response_values)
+                    plain_text_response = "\n".join(response_values)
                     return Response(plain_text_response, 
                                   status=status.HTTP_201_CREATED,
                                   content_type='text/plain')

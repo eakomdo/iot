@@ -271,35 +271,33 @@ void sendSensorData() {
       case 201:
         Serial.println("✅ 201 CREATED - Data stored successfully");
         
-        // Display the raw sensor values (no JSON parsing needed)
+        // Display the raw sensor values (one per line)
         if (response.length() > 0) {
-          Serial.println("📊 Real-time Values: " + response);
+          Serial.println("📊 Raw Values Received:");
           
-          // If response contains plain text values, display them clearly
-          if (response.indexOf("ECG:") != -1 || response.indexOf("|") != -1) {
-            Serial.println("🔴 Live Readings:");
-            
-            // Split by | and display each sensor value
-            int lastIndex = 0;
-            int index = response.indexOf("|");
-            
-            while (index != -1) {
-              String value = response.substring(lastIndex, index);
-              value.trim();
-              if (value.length() > 0) {
-                Serial.println("  " + value);
-              }
-              lastIndex = index + 1;
-              index = response.indexOf("|", lastIndex);
+          // Split response by newlines and display each value
+          int startIndex = 0;
+          int newlineIndex = response.indexOf('\n');
+          int valueCount = 1;
+          
+          while (newlineIndex != -1) {
+            String value = response.substring(startIndex, newlineIndex);
+            value.trim();
+            if (value.length() > 0) {
+              Serial.println("  Value " + String(valueCount) + ": " + value);
+              valueCount++;
             }
-            
-            // Print the last value
-            String lastValue = response.substring(lastIndex);
-            lastValue.trim();
-            if (lastValue.length() > 0) {
-              Serial.println("  " + lastValue);
-            }
+            startIndex = newlineIndex + 1;
+            newlineIndex = response.indexOf('\n', startIndex);
           }
+          
+          // Print the last value (after the last newline)
+          String lastValue = response.substring(startIndex);
+          lastValue.trim();
+          if (lastValue.length() > 0) {
+            Serial.println("  Value " + String(valueCount) + ": " + lastValue);
+          }
+          
           Serial.println(""); // Empty line for readability
         }
         break;
