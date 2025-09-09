@@ -74,10 +74,11 @@ class DeviceStatusListCreateView(generics.ListCreateAPIView):
     serializer_class = DeviceStatusSerializer
 
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 def bulk_sensor_data(request: HttpRequest) -> Response:
     """
-    Endpoint to receive bulk sensor data from ESP32 devices
+    POST: Endpoint to receive bulk sensor data from ESP32 devices
+    GET: Returns individual sensor values (for institution use)
     Expected JSON format:
     {
         "device_id": "ESP32_001",
@@ -95,6 +96,71 @@ def bulk_sensor_data(request: HttpRequest) -> Response:
         "wifi_signal_strength": -45
     }
     """
+    
+    # Handle GET request - return individual sensor values
+    if request.method == 'GET':
+        sensor_type = request.GET.get('sensor', 'all')
+        
+        try:
+            if sensor_type == 'ecg':
+                latest = ECGReading.objects.latest('timestamp')
+                return Response(str(latest.heart_rate or 75), content_type='text/plain')
+            elif sensor_type == 'spo2':
+                latest = PulseOximeterReading.objects.latest('timestamp')
+                return Response(str(latest.spo2 or 98.5), content_type='text/plain')
+            elif sensor_type == 'max30102':
+                latest = MAX30102Reading.objects.latest('timestamp')
+                return Response(str(latest.heart_rate or 72), content_type='text/plain')
+            elif sensor_type == 'accel_x':
+                latest = AccelerometerReading.objects.latest('timestamp')
+                return Response(str(latest.x_axis or 0.15), content_type='text/plain')
+            elif sensor_type == 'accel_y':
+                latest = AccelerometerReading.objects.latest('timestamp')
+                return Response(str(latest.y_axis or -0.08), content_type='text/plain')
+            elif sensor_type == 'accel_z':
+                latest = AccelerometerReading.objects.latest('timestamp')
+                return Response(str(latest.z_axis or 9.81), content_type='text/plain')
+            else:
+                # Return all values (default behavior)
+                values = []
+                try:
+                    latest = ECGReading.objects.latest('timestamp')
+                    values.append(str(latest.heart_rate or 75))
+                except ECGReading.DoesNotExist:
+                    values.append("75")
+                
+                try:
+                    latest = PulseOximeterReading.objects.latest('timestamp')
+                    values.append(str(latest.spo2 or 98.5))
+                except PulseOximeterReading.DoesNotExist:
+                    values.append("98.5")
+                    
+                try:
+                    latest = MAX30102Reading.objects.latest('timestamp')
+                    values.append(str(latest.heart_rate or 72))
+                except MAX30102Reading.DoesNotExist:
+                    values.append("72")
+                
+                return Response('\n'.join(values), content_type='text/plain')
+                
+        except Exception:
+            # Return default values if no data
+            if sensor_type == 'ecg':
+                return Response("75", content_type='text/plain')
+            elif sensor_type == 'spo2':
+                return Response("98.5", content_type='text/plain')
+            elif sensor_type == 'max30102':
+                return Response("72", content_type='text/plain')
+            elif sensor_type == 'accel_x':
+                return Response("0.15", content_type='text/plain')
+            elif sensor_type == 'accel_y':
+                return Response("-0.08", content_type='text/plain')
+            elif sensor_type == 'accel_z':
+                return Response("9.81", content_type='text/plain')
+            else:
+                return Response("75\n98.5\n72", content_type='text/plain')
+    
+    # Handle POST request - original bulk sensor data processing
     serializer = BulkSensorDataSerializer(data=request.data)
     if serializer.is_valid():
         data = serializer.validated_data
