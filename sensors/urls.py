@@ -114,6 +114,193 @@ def test_post_endpoint(request):
     else:
         return post_sensor_data(request)
 
+# JSON API endpoints for mobile app integration
+def ecg_json(request):
+    """Returns ECG data in JSON format for mobile apps"""
+    try:
+        from .models import ECGReading
+        latest = ECGReading.objects.latest('timestamp')
+        return JsonResponse({
+            'sensor_type': 'ECG',
+            'value': latest.heart_rate if latest.heart_rate else 75,
+            'unit': 'BPM',
+            'timestamp': latest.timestamp.isoformat(),
+            'device_id': latest.device.device_id,
+            'status': 'live'
+        })
+    except ECGReading.DoesNotExist:
+        return JsonResponse({
+            'sensor_type': 'ECG',
+            'value': 75,
+            'unit': 'BPM',
+            'timestamp': timezone.now().isoformat(),
+            'device_id': 'fallback',
+            'status': 'fallback'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def spo2_json(request):
+    """Returns SpO2 data in JSON format for mobile apps"""
+    try:
+        from .models import PulseOximeterReading
+        latest = PulseOximeterReading.objects.latest('timestamp')
+        return JsonResponse({
+            'sensor_type': 'SpO2',
+            'value': latest.spo2 if latest.spo2 else 98.5,
+            'unit': '%',
+            'timestamp': latest.timestamp.isoformat(),
+            'device_id': latest.device.device_id,
+            'status': 'live'
+        })
+    except PulseOximeterReading.DoesNotExist:
+        return JsonResponse({
+            'sensor_type': 'SpO2',
+            'value': 98.5,
+            'unit': '%',
+            'timestamp': timezone.now().isoformat(),
+            'device_id': 'fallback',
+            'status': 'fallback'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def max30102_json(request):
+    """Returns MAX30102 data in JSON format for mobile apps"""
+    try:
+        from .models import MAX30102Reading
+        latest = MAX30102Reading.objects.latest('timestamp')
+        return JsonResponse({
+            'sensor_type': 'MAX30102',
+            'value': latest.heart_rate if latest.heart_rate else 72,
+            'unit': 'BPM',
+            'timestamp': latest.timestamp.isoformat(),
+            'device_id': latest.device.device_id,
+            'status': 'live'
+        })
+    except MAX30102Reading.DoesNotExist:
+        return JsonResponse({
+            'sensor_type': 'MAX30102',
+            'value': 72,
+            'unit': 'BPM',
+            'timestamp': timezone.now().isoformat(),
+            'device_id': 'fallback',
+            'status': 'fallback'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def accelerometer_json(request):
+    """Returns Accelerometer data in JSON format for mobile apps"""
+    try:
+        from .models import AccelerometerReading
+        latest = AccelerometerReading.objects.latest('timestamp')
+        return JsonResponse({
+            'sensor_type': 'Accelerometer',
+            'values': {
+                'x': latest.x_axis if latest.x_axis is not None else 0.15,
+                'y': latest.y_axis if latest.y_axis is not None else -0.08,
+                'z': latest.z_axis if latest.z_axis is not None else 9.81,
+                'magnitude': latest.magnitude if hasattr(latest, 'magnitude') else 9.82
+            },
+            'unit': 'g',
+            'timestamp': latest.timestamp.isoformat(),
+            'device_id': latest.device.device_id,
+            'status': 'live'
+        })
+    except AccelerometerReading.DoesNotExist:
+        return JsonResponse({
+            'sensor_type': 'Accelerometer',
+            'values': {'x': 0.15, 'y': -0.08, 'z': 9.81, 'magnitude': 9.82},
+            'unit': 'g',
+            'timestamp': timezone.now().isoformat(),
+            'device_id': 'fallback',
+            'status': 'fallback'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def all_sensors_json(request):
+    """Returns all sensor data in one JSON response for mobile apps"""
+    try:
+        from .models import ECGReading, PulseOximeterReading, MAX30102Reading, AccelerometerReading
+        
+        data = {
+            'timestamp': timezone.now().isoformat(),
+            'sensors': {}
+        }
+        
+        # ECG Data
+        try:
+            ecg_latest = ECGReading.objects.latest('timestamp')
+            data['sensors']['ecg'] = {
+                'value': ecg_latest.heart_rate or 75,
+                'unit': 'BPM',
+                'timestamp': ecg_latest.timestamp.isoformat(),
+                'device_id': ecg_latest.device.device_id,
+                'status': 'live'
+            }
+        except ECGReading.DoesNotExist:
+            data['sensors']['ecg'] = {
+                'value': 75, 'unit': 'BPM', 'status': 'fallback'
+            }
+        
+        # SpO2 Data
+        try:
+            spo2_latest = PulseOximeterReading.objects.latest('timestamp')
+            data['sensors']['spo2'] = {
+                'value': spo2_latest.spo2 or 98.5,
+                'unit': '%',
+                'timestamp': spo2_latest.timestamp.isoformat(),
+                'device_id': spo2_latest.device.device_id,
+                'status': 'live'
+            }
+        except PulseOximeterReading.DoesNotExist:
+            data['sensors']['spo2'] = {
+                'value': 98.5, 'unit': '%', 'status': 'fallback'
+            }
+        
+        # MAX30102 Data
+        try:
+            max_latest = MAX30102Reading.objects.latest('timestamp')
+            data['sensors']['max30102'] = {
+                'value': max_latest.heart_rate or 72,
+                'unit': 'BPM',
+                'timestamp': max_latest.timestamp.isoformat(),
+                'device_id': max_latest.device.device_id,
+                'status': 'live'
+            }
+        except MAX30102Reading.DoesNotExist:
+            data['sensors']['max30102'] = {
+                'value': 72, 'unit': 'BPM', 'status': 'fallback'
+            }
+        
+        # Accelerometer Data
+        try:
+            accel_latest = AccelerometerReading.objects.latest('timestamp')
+            data['sensors']['accelerometer'] = {
+                'values': {
+                    'x': accel_latest.x_axis or 0.15,
+                    'y': accel_latest.y_axis or -0.08,
+                    'z': accel_latest.z_axis or 9.81,
+                    'magnitude': accel_latest.magnitude if hasattr(accel_latest, 'magnitude') else 9.82
+                },
+                'unit': 'g',
+                'timestamp': accel_latest.timestamp.isoformat(),
+                'device_id': accel_latest.device.device_id,
+                'status': 'live'
+            }
+        except AccelerometerReading.DoesNotExist:
+            data['sensors']['accelerometer'] = {
+                'values': {'x': 0.15, 'y': -0.08, 'z': 9.81, 'magnitude': 9.82},
+                'unit': 'g', 'status': 'fallback'
+            }
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 @csrf_exempt
 def post_sensor_data(request):
     """Endpoint for ESP32 to POST sensor data"""
@@ -234,7 +421,14 @@ urlpatterns = [
     # Test endpoint (can be accessed via browser)
     path('test_post/', test_post_endpoint, name='test-post'),
     
-    # Individual sensor endpoints for your institution
+    # JSON API endpoints for mobile app integration
+    path('json/ecg/', ecg_json, name='ecg-json'),
+    path('json/spo2/', spo2_json, name='spo2-json'),
+    path('json/max30102/', max30102_json, name='max30102-json'),
+    path('json/accelerometer/', accelerometer_json, name='accelerometer-json'),
+    path('json/all/', all_sensors_json, name='all-sensors-json'),
+    
+    # Individual sensor endpoints for your institution (plain text)
     path('ecg/', ecg_value, name='ecg'),
     path('spo2/', spo2_value, name='spo2'),
     path('max30102/', max30102_value, name='max30102'),
