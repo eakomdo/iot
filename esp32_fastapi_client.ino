@@ -11,8 +11,8 @@
 const char* ssid = "Galaxy AO3 3614";
 const char* password = "qwerty87";
 
-// FastAPI server endpoint (like your blood values URL)
-const char* apiEndpoint = "https://your-iot-sensors.onrender.com/post_sensor_data";
+// Django server endpoint - FIXED URL
+const char* apiEndpoint = "https://iot-khgd.onrender.com/api/post_sensor_data/";
 
 // Sensor pins (similar to your blood sensor setup)
 const int ECG_PIN = A0;
