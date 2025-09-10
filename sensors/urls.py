@@ -19,7 +19,7 @@ def ecg_value(request):
         value = latest.heart_rate if latest.heart_rate else 75
         # Add debug info if needed
         if request.GET.get('debug'):
-            return HttpResponse(f"Latest ECG: {value} from {latest.timestamp}", content_type='text/plain')
+            return HttpResponse(f"Latest ECG: {value} from {latest.timestamp} (Device: {latest.device.device_id})", content_type='text/plain')
         return HttpResponse(str(value), content_type='text/plain')
     except ECGReading.DoesNotExist:
         # No data in database yet
@@ -39,7 +39,7 @@ def spo2_value(request):
         latest = PulseOximeterReading.objects.latest('timestamp')
         value = latest.spo2 if latest.spo2 else 98.5
         if request.GET.get('debug'):
-            return HttpResponse(f"Latest SpO2: {value} from {latest.timestamp}", content_type='text/plain')
+            return HttpResponse(f"Latest SpO2: {value} from {latest.timestamp} (Device: {latest.device.device_id})", content_type='text/plain')
         return HttpResponse(str(value), content_type='text/plain')
     except PulseOximeterReading.DoesNotExist:
         if request.GET.get('debug'):
@@ -57,7 +57,7 @@ def max30102_value(request):
         latest = MAX30102Reading.objects.latest('timestamp')
         value = latest.heart_rate if latest.heart_rate else 72
         if request.GET.get('debug'):
-            return HttpResponse(f"Latest MAX30102: {value} from {latest.timestamp}", content_type='text/plain')
+            return HttpResponse(f"Latest MAX30102: {value} from {latest.timestamp} (Device: {latest.device.device_id})", content_type='text/plain')
         return HttpResponse(str(value), content_type='text/plain')
     except MAX30102Reading.DoesNotExist:
         if request.GET.get('debug'):
@@ -126,20 +126,35 @@ def post_sensor_data(request):
         
         # Import models here to avoid import issues
         try:
-            from .models import ECGReading, PulseOximeterReading, MAX30102Reading, AccelerometerReading
+            from .models import Device, ECGReading, PulseOximeterReading, MAX30102Reading, AccelerometerReading
         except ImportError as e:
             return JsonResponse({'status': 'error', 'message': f'Model import error: {str(e)}'}, status=500)
         
-        # Save to database
+        # Get or create device
+        device_id_str = data.get('device_id', 'ESP32_IOT_SENSORS')
+        device, created = Device.objects.get_or_create(
+            device_id=device_id_str,
+            defaults={
+                'name': f'ESP32 Device {device_id_str}',
+                'device_type': 'ESP32',
+                'is_active': True
+            }
+        )
+        
+        # Update last_seen
+        device.last_seen = timezone.now()
+        device.save()
+        
+        # Save sensor readings
         saved_data = []
         
         # Create ECG reading
         if 'ecg_heart_rate' in data and data['ecg_heart_rate']:
             try:
                 ECGReading.objects.create(
-                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    device=device,
                     heart_rate=float(data['ecg_heart_rate']),
-                    timestamp=timezone.now()
+                    ecg_value=float(data['ecg_heart_rate']),  # Use same value for now
                 )
                 saved_data.append('ECG')
             except Exception as e:
@@ -149,9 +164,10 @@ def post_sensor_data(request):
         if 'spo2' in data and data['spo2']:
             try:
                 PulseOximeterReading.objects.create(
-                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    device=device,
                     spo2=float(data['spo2']),
-                    timestamp=timezone.now()
+                    heart_rate=float(data.get('pulse_heart_rate', data.get('ecg_heart_rate', 70))),
+                    signal_strength=90,  # Default signal strength
                 )
                 saved_data.append('SpO2')
             except Exception as e:
@@ -161,9 +177,10 @@ def post_sensor_data(request):
         if 'max30102_heart_rate' in data and data['max30102_heart_rate']:
             try:
                 MAX30102Reading.objects.create(
-                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    device=device,
                     heart_rate=float(data['max30102_heart_rate']),
-                    timestamp=timezone.now()
+                    red_value=1000,  # Default values
+                    ir_value=1000,
                 )
                 saved_data.append('MAX30102')
             except Exception as e:
@@ -172,12 +189,14 @@ def post_sensor_data(request):
         # Create Accelerometer reading
         if all(key in data for key in ['x_axis', 'y_axis', 'z_axis']):
             try:
+                x, y, z = float(data['x_axis']), float(data['y_axis']), float(data['z_axis'])
+                magnitude = (x**2 + y**2 + z**2)**0.5
                 AccelerometerReading.objects.create(
-                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
-                    x_axis=float(data['x_axis']),
-                    y_axis=float(data['y_axis']),
-                    z_axis=float(data['z_axis']),
-                    timestamp=timezone.now()
+                    device=device,
+                    x_axis=x,
+                    y_axis=y,
+                    z_axis=z,
+                    magnitude=magnitude
                 )
                 saved_data.append('Accelerometer')
             except Exception as e:
@@ -185,7 +204,8 @@ def post_sensor_data(request):
         
         return JsonResponse({
             'status': 'success',
-            'message': 'Sensor data received',
+            'message': 'Sensor data received and saved',
+            'device_created': created,
             'saved': saved_data,
             'received_fields': list(data.keys())
         })
