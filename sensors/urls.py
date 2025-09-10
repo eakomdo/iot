@@ -5,16 +5,27 @@ Returns live data from database when devices are connected, fallback to defaults
 from django.urls import path
 from django.http import HttpResponse
 
-# REAL-TIME endpoints that fetch from database
+# REAL-TIME endpoints that fetch from database with DEBUG INFO
 def ecg_value(request):
     """Returns REAL-TIME ECG data from database"""
     try:
         from .models import ECGReading
+        # Try to get latest reading
         latest = ECGReading.objects.latest('timestamp')
         value = latest.heart_rate if latest.heart_rate else 75
+        # Add debug info if needed
+        if request.GET.get('debug'):
+            return HttpResponse(f"Latest ECG: {value} from {latest.timestamp}", content_type='text/plain')
         return HttpResponse(str(value), content_type='text/plain')
-    except:
-        # Fallback when no device connected yet
+    except ECGReading.DoesNotExist:
+        # No data in database yet
+        if request.GET.get('debug'):
+            return HttpResponse("No ECG data in database - returning fallback 75", content_type='text/plain')
+        return HttpResponse("75", content_type='text/plain')
+    except Exception as e:
+        # Other error
+        if request.GET.get('debug'):
+            return HttpResponse(f"Error: {str(e)} - returning fallback 75", content_type='text/plain')
         return HttpResponse("75", content_type='text/plain')
 
 def spo2_value(request):
@@ -23,9 +34,16 @@ def spo2_value(request):
         from .models import PulseOximeterReading
         latest = PulseOximeterReading.objects.latest('timestamp')
         value = latest.spo2 if latest.spo2 else 98.5
+        if request.GET.get('debug'):
+            return HttpResponse(f"Latest SpO2: {value} from {latest.timestamp}", content_type='text/plain')
         return HttpResponse(str(value), content_type='text/plain')
-    except:
-        # Fallback when no device connected yet
+    except PulseOximeterReading.DoesNotExist:
+        if request.GET.get('debug'):
+            return HttpResponse("No SpO2 data in database - returning fallback 98.5", content_type='text/plain')
+        return HttpResponse("98.5", content_type='text/plain')
+    except Exception as e:
+        if request.GET.get('debug'):
+            return HttpResponse(f"Error: {str(e)} - returning fallback 98.5", content_type='text/plain')
         return HttpResponse("98.5", content_type='text/plain')
 
 def max30102_value(request):
@@ -34,9 +52,16 @@ def max30102_value(request):
         from .models import MAX30102Reading
         latest = MAX30102Reading.objects.latest('timestamp')
         value = latest.heart_rate if latest.heart_rate else 72
+        if request.GET.get('debug'):
+            return HttpResponse(f"Latest MAX30102: {value} from {latest.timestamp}", content_type='text/plain')
         return HttpResponse(str(value), content_type='text/plain')
-    except:
-        # Fallback when no device connected yet
+    except MAX30102Reading.DoesNotExist:
+        if request.GET.get('debug'):
+            return HttpResponse("No MAX30102 data in database - returning fallback 72", content_type='text/plain')
+        return HttpResponse("72", content_type='text/plain')
+    except Exception as e:
+        if request.GET.get('debug'):
+            return HttpResponse(f"Error: {str(e)} - returning fallback 72", content_type='text/plain')
         return HttpResponse("72", content_type='text/plain')
 
 def accel_x_value(request):
