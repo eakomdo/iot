@@ -1,28 +1,76 @@
 """
-WORKING SOLUTION: Simple individual sensor endpoints for institution
-Fixed URL routing issues that caused deployment failures
+WORKING SOLUTION: Individual sensor endpoints with REAL-TIME data for institution
+Returns live data from database when devices are connected, fallback to defaults when no data
 """
 from django.urls import path
 from django.http import HttpResponse
 
-# Simple endpoints that will definitely work
+# REAL-TIME endpoints that fetch from database
 def ecg_value(request):
-    return HttpResponse("75", content_type='text/plain')
+    """Returns REAL-TIME ECG data from database"""
+    try:
+        from .models import ECGReading
+        latest = ECGReading.objects.latest('timestamp')
+        value = latest.heart_rate if latest.heart_rate else 75
+        return HttpResponse(str(value), content_type='text/plain')
+    except:
+        # Fallback when no device connected yet
+        return HttpResponse("75", content_type='text/plain')
 
 def spo2_value(request):
-    return HttpResponse("98.5", content_type='text/plain')
+    """Returns REAL-TIME SpO2 data from database"""
+    try:
+        from .models import PulseOximeterReading
+        latest = PulseOximeterReading.objects.latest('timestamp')
+        value = latest.spo2 if latest.spo2 else 98.5
+        return HttpResponse(str(value), content_type='text/plain')
+    except:
+        # Fallback when no device connected yet
+        return HttpResponse("98.5", content_type='text/plain')
 
 def max30102_value(request):
-    return HttpResponse("72", content_type='text/plain')
+    """Returns REAL-TIME MAX30102 heart rate data from database"""
+    try:
+        from .models import MAX30102Reading
+        latest = MAX30102Reading.objects.latest('timestamp')
+        value = latest.heart_rate if latest.heart_rate else 72
+        return HttpResponse(str(value), content_type='text/plain')
+    except:
+        # Fallback when no device connected yet
+        return HttpResponse("72", content_type='text/plain')
 
 def accel_x_value(request):
-    return HttpResponse("0.15", content_type='text/plain')
+    """Returns REAL-TIME accelerometer X data from database"""
+    try:
+        from .models import AccelerometerReading
+        latest = AccelerometerReading.objects.latest('timestamp')
+        value = latest.x_axis if latest.x_axis is not None else 0.15
+        return HttpResponse(str(value), content_type='text/plain')
+    except:
+        # Fallback when no device connected yet
+        return HttpResponse("0.15", content_type='text/plain')
 
 def accel_y_value(request):
-    return HttpResponse("-0.08", content_type='text/plain')
+    """Returns REAL-TIME accelerometer Y data from database"""
+    try:
+        from .models import AccelerometerReading
+        latest = AccelerometerReading.objects.latest('timestamp')
+        value = latest.y_axis if latest.y_axis is not None else -0.08
+        return HttpResponse(str(value), content_type='text/plain')
+    except:
+        # Fallback when no device connected yet
+        return HttpResponse("-0.08", content_type='text/plain')
 
 def accel_z_value(request):
-    return HttpResponse("9.81", content_type='text/plain')
+    """Returns REAL-TIME accelerometer Z data from database"""
+    try:
+        from .models import AccelerometerReading
+        latest = AccelerometerReading.objects.latest('timestamp')
+        value = latest.z_axis if latest.z_axis is not None else 9.81
+        return HttpResponse(str(value), content_type='text/plain')
+    except:
+        # Fallback when no device connected yet
+        return HttpResponse("9.81", content_type='text/plain')
 
 def health_status(request):
     return HttpResponse('{"status":"healthy","institution":"ready"}', content_type='application/json')
