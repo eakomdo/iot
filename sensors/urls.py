@@ -107,64 +107,95 @@ def health_status(request):
 def api_root(request):
     return HttpResponse("IoT API - Individual sensor endpoints working for institution", content_type='text/plain')
 
+def test_post_endpoint(request):
+    """Test endpoint to verify POST endpoint is deployed"""
+    if request.method == 'GET':
+        return HttpResponse("POST endpoint is deployed and ready. Use POST method to send sensor data.", content_type='text/plain')
+    else:
+        return post_sensor_data(request)
+
 @csrf_exempt
-@require_http_methods(["POST"])
 def post_sensor_data(request):
     """Endpoint for ESP32 to POST sensor data"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
+    
     try:
         # Parse JSON data from ESP32
         data = json.loads(request.body.decode('utf-8'))
         
+        # Import models here to avoid import issues
+        try:
+            from .models import ECGReading, PulseOximeterReading, MAX30102Reading, AccelerometerReading
+        except ImportError as e:
+            return JsonResponse({'status': 'error', 'message': f'Model import error: {str(e)}'}, status=500)
+        
         # Save to database
-        from .models import ECGReading, PulseOximeterReading, MAX30102Reading, AccelerometerReading
+        saved_data = []
         
         # Create ECG reading
-        if 'ecg_heart_rate' in data:
-            ECGReading.objects.create(
-                device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
-                heart_rate=float(data['ecg_heart_rate']),
-                timestamp=timezone.now()
-            )
+        if 'ecg_heart_rate' in data and data['ecg_heart_rate']:
+            try:
+                ECGReading.objects.create(
+                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    heart_rate=float(data['ecg_heart_rate']),
+                    timestamp=timezone.now()
+                )
+                saved_data.append('ECG')
+            except Exception as e:
+                pass  # Continue with other sensors
         
         # Create SpO2 reading  
-        if 'spo2' in data:
-            PulseOximeterReading.objects.create(
-                device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
-                spo2=float(data['spo2']),
-                timestamp=timezone.now()
-            )
+        if 'spo2' in data and data['spo2']:
+            try:
+                PulseOximeterReading.objects.create(
+                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    spo2=float(data['spo2']),
+                    timestamp=timezone.now()
+                )
+                saved_data.append('SpO2')
+            except Exception as e:
+                pass  # Continue with other sensors
         
         # Create MAX30102 reading
-        if 'max30102_heart_rate' in data:
-            MAX30102Reading.objects.create(
-                device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
-                heart_rate=float(data['max30102_heart_rate']),
-                timestamp=timezone.now()
-            )
+        if 'max30102_heart_rate' in data and data['max30102_heart_rate']:
+            try:
+                MAX30102Reading.objects.create(
+                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    heart_rate=float(data['max30102_heart_rate']),
+                    timestamp=timezone.now()
+                )
+                saved_data.append('MAX30102')
+            except Exception as e:
+                pass  # Continue with other sensors
         
         # Create Accelerometer reading
-        if 'x_axis' in data and 'y_axis' in data and 'z_axis' in data:
-            AccelerometerReading.objects.create(
-                device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
-                x_axis=float(data['x_axis']),
-                y_axis=float(data['y_axis']),
-                z_axis=float(data['z_axis']),
-                timestamp=timezone.now()
-            )
+        if all(key in data for key in ['x_axis', 'y_axis', 'z_axis']):
+            try:
+                AccelerometerReading.objects.create(
+                    device_id=data.get('device_id', 'ESP32_IOT_SENSORS'),
+                    x_axis=float(data['x_axis']),
+                    y_axis=float(data['y_axis']),
+                    z_axis=float(data['z_axis']),
+                    timestamp=timezone.now()
+                )
+                saved_data.append('Accelerometer')
+            except Exception as e:
+                pass  # Continue
         
         return JsonResponse({
             'status': 'success',
-            'message': 'Sensor data saved successfully',
+            'message': 'Sensor data received',
+            'saved': saved_data,
             'received_fields': list(data.keys())
         })
         
     except json.JSONDecodeError:
-        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        return JsonResponse({'status': 'error', 'message': f'Server error: {str(e)}'}, status=500)
 
 @csrf_exempt  
-@require_http_methods(["POST"])
 def sensors_bulk(request):
     """Alternative bulk endpoint for ESP32 compatibility"""
     return post_sensor_data(request)
@@ -179,6 +210,9 @@ urlpatterns = [
     # ESP32 POST endpoints
     path('post_sensor_data/', post_sensor_data, name='post-sensor-data'),
     path('sensors/bulk/', sensors_bulk, name='sensors-bulk'),
+    
+    # Test endpoint (can be accessed via browser)
+    path('test_post/', test_post_endpoint, name='test-post'),
     
     # Individual sensor endpoints for your institution
     path('ecg/', ecg_value, name='ecg'),
